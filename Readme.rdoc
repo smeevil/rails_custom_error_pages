@@ -1,0 +1,29 @@
+= CustomErrorPages
+
+Rails plugin that shows error pages with a funny photo on them instead of the boring Rails error pages.
+
+In development mode it will only trigger on obvious errors, like routing errors and Acl9 authentication errors.
+In production mode it will trigger on all errors, but it does return the appropriate 404, 403 or 500 status code.
+
+Each status code has its own directory with images, so you can adjust them to your liking.
+
+The errors CustomErrorPages handles can be changed by overriding the following methods in any controller:
+
+  class ApplicationController < ActionController::Base
+    def self.access_denied_errors
+      super # Handle all default errors
+    end
+
+    # Handle ActiveResource errors if ActiveResource is present
+    def self.not_found_errors
+      if defined?(ActiveResource::ResourceNotFound)
+        super + [ActiveResource::ResourceNotFound]
+      else
+        super
+      end
+    end
+
+    def self.real_errors
+      super # Handle all default errors
+    end
+  end
