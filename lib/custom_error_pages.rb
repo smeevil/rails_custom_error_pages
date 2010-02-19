@@ -1,8 +1,11 @@
-class ApplicationController < ActionController::Base
-  public
-  
+module CustomErrorPages
+  def self.included(klass)
+    klass.extend ClassMethods
+    klass.handle_exceptions
+  end
+
   def render_error(exception)
-    log_error(exception) if respond_to?(:log_error)
+    log_error(exception)
     notify_hoptoad(exception) if respond_to?(:notify_hoptoad)
     activate_authlogic if respond_to?(:activate_authlogic)
     render :template => "/application/500", :status => 500, :layout=>"custom_error_page"
@@ -11,45 +14,66 @@ class ApplicationController < ActionController::Base
   #keep this public for error calling from outside
   def render_not_found(exception=nil)
     if exception === Exception
-      log_error(exception) if respond_to?(:log_error)
+      log_error(exception)
       notify_hoptoad(exception) if respond_to?(:notify_hoptoad)
+    elsif exception.nil? && params[:path].is_a?(Array)
+      # Catch-all route defined in routes.rb. Just render the 404.
     else
       @message = exception
     end
     render :template => "/application/404", :status => 404, :layout=>"custom_error_page"
   end
-  
-  private
-  
-  def handle_exceptions(exception)
-    if defined?(Acl9)
-      case exception
-      when Acl9::AccessDenied
-        access_denied(exception)
-      else
-        raise if ActionController::Base.consider_all_requests_local
-      end
-    else
-      raise if ActionController::Base.consider_all_requests_local
-    end
-    
-    # Only rescue these errors in production mode and when we have not yet performed a rendering.
-    return if performed?
 
+  private
+
+  def handle_exception(exception)
     case exception
-    when ActiveRecord::RecordNotFound, ActionController::RoutingError, ActionController::UnknownController, ActionController::UnknownAction
-      render_not_found(exception) unless ActionController::Base.consider_all_requests_local
-    else # Exception
-      render_error(exception) unless ActionController::Base.consider_all_requests_local
+    when *self.class.access_denied_errors
+      access_denied(exception)
+    when *self.class.not_found_errors
+      render_not_found(exception)
+    when *self.class.real_errors
+      render_error(exception)
+    else
+      super
     end
   end
-  
+
   def access_denied(exception=nil)
     if current_user
       render :template => 'application/403', :layout=>"custom_error_page" , :status=>403
     else
       flash[:notice] = "Access denied. Try to log in first."
       redirect_to login_path
+    end
+  end
+
+  module ClassMethods
+    def handle_exceptions
+      (access_denied_errors + not_found_errors + real_errors).each do |error|
+        rescue_from error, :with => :handle_exception
+      end
+    end
+
+    def access_denied_errors
+      errors = []
+      errors << Acl9::AccessDenied if defined?(Acl9::AccessDenied)
+      errors
+    end
+
+    def not_found_errors
+      errors = []
+      errors << ActiveRecord::RecordNotFound if defined?(ActiveRecord::RecordNotFound) and not ActionController::Base.consider_all_requests_local
+      errors << ActionController::RoutingError if defined?(ActionController::RoutingError) and not ActionController::Base.consider_all_requests_local
+      errors << ActionController::UnknownController if defined?(ActionController::UnknownController) and not ActionController::Base.consider_all_requests_local
+      errors << ActionController::UnknownAction if defined?(ActionController::UnknownAction) and not ActionController::Base.consider_all_requests_local
+      errors
+    end
+
+    def real_errors
+      errors = []
+      errors << Exception if not ActionController::Base.consider_all_requests_local
+      errors
     end
   end
 end
@@ -59,4 +83,8 @@ module ApplicationHelper
     files=Dir.glob("#{RAILS_ROOT}/public/images/#{err.to_s}/*")
     files.rand.gsub("#{RAILS_ROOT}/public/images/","")
   end
+end
+
+class ApplicationController < ActionController::Base
+  include CustomErrorPages
 end
