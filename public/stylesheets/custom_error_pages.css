@@ -1,0 +1,27 @@
+#exception_error_message{
+	text-align: center;
+	font-size: 30px;
+	color: red;
+	font-weight: bolder;
+	padding: 20px;
+}
+
+#funny_subtitle {
+  text-align: center;
+  font-size: 20px;
+  color: #666;
+  font-weight: bolder;
+  padding: 20px;
+}
+
+#centered_image{
+	text-align: center;
+	width: 640px;
+	margin: auto auto;
+}
+
+
+#centered_image img{
+	border: 5px solid;
+	padding: 50px;
+}
