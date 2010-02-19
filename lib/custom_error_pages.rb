@@ -2,7 +2,7 @@ class ApplicationController < ActionController::Base
   public
   
   def render_error(exception)
-    log_error(exception)
+    log_error(exception) if respond_to?(:log_error)
     notify_hoptoad(exception) if respond_to?(:notify_hoptoad)
     activate_authlogic if respond_to?(:activate_authlogic)
     render :template => "/application/500", :status => 500, :layout=>"custom_error_page"
@@ -11,7 +11,7 @@ class ApplicationController < ActionController::Base
   #keep this public for error calling from outside
   def render_not_found(exception=nil)
     if exception === Exception
-      log_error(exception)
+      log_error(exception) if respond_to?(:log_error)
       notify_hoptoad(exception) if respond_to?(:notify_hoptoad)
     else
       @message = exception
