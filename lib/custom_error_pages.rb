@@ -57,6 +57,7 @@ module CustomErrorPages
 
     def access_denied_errors
       errors = []
+      errors << ActionController::InvalidAuthenticityToken
       errors << Acl9::AccessDenied if defined?(Acl9::AccessDenied)
       errors
     end
