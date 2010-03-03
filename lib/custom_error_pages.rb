@@ -45,6 +45,7 @@ module CustomErrorPages
 
   def access_denied(exception=nil)
     if current_user
+      @message = exception unless exception === Exception
       render :template => 'application/403', :layout=>"custom_error_page" , :status=>403
     else
       flash[:notice] = "Access denied. Try to log in first."
