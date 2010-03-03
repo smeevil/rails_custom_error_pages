@@ -5,9 +5,13 @@ module CustomErrorPages
   end
 
   def render_error(exception)
-    log_error(exception)
-    notify_hoptoad(exception) if respond_to?(:notify_hoptoad)
-    activate_authlogic if respond_to?(:activate_authlogic)
+    if exception === Exception
+      log_error(exception)
+      notify_hoptoad(exception) if respond_to?(:notify_hoptoad)
+      activate_authlogic if respond_to?(:activate_authlogic)
+    else
+      @message = exception
+    end
     render :template => "/application/500", :status => 500, :layout=>"custom_error_page"
   end
 
