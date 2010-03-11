@@ -4,22 +4,40 @@ module CustomErrorPages
     klass.handle_exceptions
   end
 
-  def render_error(exception)
-    if exception === Exception
+  def render_error(exception=nil)
+    logger.debug "Real error"
+    if exception.kind_of?(Exception)
+      logger.debug "Exception matched. Logging."
       log_error(exception)
-      notify_hoptoad(exception) if respond_to?(:notify_hoptoad)
-      activate_authlogic if respond_to?(:activate_authlogic)
+      logger.debug "Notifying hoptoad"
+      attempt_to_notify_hoptoad(exception)
+      if respond_to?(:activate_authlogic)
+        logger.debug "Activating authlogic"
+        activate_authlogic
+      end
     else
+      logger.debug "Not an exception, treating it as custom message."
       @message = exception
     end
     render :template => "/application/500", :status => 500, :layout=>"custom_error_page"
   end
 
-  #keep this public for error calling from outside
+  def access_denied(exception=nil)
+    logger.debug "Access denied"
+    if current_user
+      @message = exception unless exception.kind_of?(Exception)
+      render :template => 'application/403', :layout=>"custom_error_page" , :status=>403
+    else
+      flash[:notice] = "Access denied. Try to log in first."
+      redirect_to login_path
+    end
+  end
+
   def render_not_found(exception=nil)
-    if exception === Exception
+    logger.debug "Not found"
+    if exception.kind_of? Exception
       log_error(exception)
-      notify_hoptoad(exception) if respond_to?(:notify_hoptoad)
+      attempt_to_notify_hoptoad(exception) if respond_to?(:attempt_to_notify_hoptoad)
     elsif exception.nil? && params[:path].is_a?(Array)
       # Catch-all route defined in routes.rb. Just render the 404.
     else
@@ -28,9 +46,10 @@ module CustomErrorPages
     render :template => "/application/404", :status => 404, :layout=>"custom_error_page"
   end
 
-  private
+  protected
 
   def handle_exception(exception)
+    logger.debug "Handling exception: #{exception.class}"
     case exception
     when *self.class.access_denied_errors
       access_denied(exception)
@@ -39,17 +58,24 @@ module CustomErrorPages
     when *self.class.real_errors
       render_error(exception)
     else
+      logger.info "Unhandled exception. Calling super."
       super
     end
+  rescue Exception => e
+    logger.info "Error while handling errors: #{e.inspect}. Notifying hoptoad."
+    attempt_to_notify_hoptoad(e)
+    raise e
   end
 
-  def access_denied(exception=nil)
-    if current_user
-      @message = exception unless exception === Exception
-      render :template => 'application/403', :layout=>"custom_error_page" , :status=>403
+  def attempt_to_notify_hoptoad(exception)
+    if respond_to?(:notify_hoptoad)
+      logger.debug "Notifying hoptoad"
+      notify_hoptoad(exception)
+    elsif defined?(HoptoadNotifier)
+      logger.debug "HoptoadNotifier.notify"
+      HoptoadNotifier.notify(exception)
     else
-      flash[:notice] = "Access denied. Try to log in first."
-      redirect_to login_path
+      logger.debug "Does not respond to notify_hoptoad"
     end
   end
 
