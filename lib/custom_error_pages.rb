@@ -68,7 +68,7 @@ module CustomErrorPages
   end
 
   def attempt_to_notify_hoptoad(exception)
-    if response_to?(:rescue_action_in_public_with_hoptoad)
+    if respond_to?(:rescue_action_in_public_with_hoptoad)
       logger.debug "Notifying hoptoad by means of rescue_action_in_public_with_hoptoad"
       rescue_action_in_public_with_hoptoad(exception)
     elsif respond_to?(:notify_hoptoad)
