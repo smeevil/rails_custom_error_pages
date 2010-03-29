@@ -37,7 +37,7 @@ module CustomErrorPages
     logger.debug "Not found"
     if exception.kind_of? Exception
       log_error(exception)
-      attempt_to_notify_hoptoad(exception) if respond_to?(:attempt_to_notify_hoptoad)
+      attempt_to_notify_hoptoad(exception)
     elsif exception.nil? && params[:path].is_a?(Array)
       # Catch-all route defined in routes.rb. Just render the 404.
     else
@@ -68,13 +68,9 @@ module CustomErrorPages
   end
 
   def attempt_to_notify_hoptoad(exception)
-    if respond_to?(:rescue_action_in_public_with_hoptoad)
-      logger.debug "Notifying hoptoad by means of rescue_action_in_public_with_hoptoad"
-      rescue_action_in_public_with_hoptoad(exception)
-    elsif respond_to?(:notify_hoptoad)
-      logger.debug "Notifying hoptoad by means of notify_hoptoad"
+    if defined?(HoptoadNotifier::Rails::ControllerMethods) and self.class.modules_included.include?(HoptoadNotifier::Rails::ControllerMethods)
       notify_hoptoad(exception)
-    elsif defined?(HoptoadNotifier)
+    elsif defined?(HoptoadNotifier) and HoptoadNotifier.respond_to?(:notify)
       logger.debug "Notify hoptoad by means of HoptoadNotifier.notify"
       HoptoadNotifier.notify(exception)
     else
