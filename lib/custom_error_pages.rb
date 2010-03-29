@@ -68,7 +68,7 @@ module CustomErrorPages
   end
 
   def attempt_to_notify_hoptoad(exception)
-    if defined?(HoptoadNotifier::Rails::ControllerMethods) and self.class.modules_included.include?(HoptoadNotifier::Rails::ControllerMethods)
+    if defined?(HoptoadNotifier::Rails::ControllerMethods) and self.class.included_modules.include?(HoptoadNotifier::Rails::ControllerMethods)
       notify_hoptoad(exception)
     elsif defined?(HoptoadNotifier) and HoptoadNotifier.respond_to?(:notify)
       logger.debug "Notify hoptoad by means of HoptoadNotifier.notify"
