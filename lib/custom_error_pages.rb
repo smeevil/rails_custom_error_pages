@@ -68,14 +68,17 @@ module CustomErrorPages
   end
 
   def attempt_to_notify_hoptoad(exception)
+    if response_to?(:rescue_action_in_public_with_hoptoad)
+      logger.debug "Notifying hoptoad by means of rescue_action_in_public_with_hoptoad"
+      rescue_action_in_public_with_hoptoad(exception)
     if respond_to?(:notify_hoptoad)
-      logger.debug "Notifying hoptoad"
+      logger.debug "Notifying hoptoad by means of notify_hoptoad"
       notify_hoptoad(exception)
     elsif defined?(HoptoadNotifier)
-      logger.debug "HoptoadNotifier.notify"
+      logger.debug "Notify hoptoad by means of HoptoadNotifier.notify"
       HoptoadNotifier.notify(exception)
     else
-      logger.debug "Does not respond to notify_hoptoad"
+      logger.debug "We have no way to notify Hoptoad. Is the hoptoad_notifier gem even installed?"
     end
   end
 
