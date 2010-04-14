@@ -1,0 +1,7 @@
+xml.instruct!
+xml.error do
+  xml.title defined?(@message) ? h(@message) : "Someone set us up the bomb!"
+  xml.message "Error code 500: Server Error"
+  xml.link request.referer||home_url
+  xml.image "#{request.protocol}#{request.host_with_port}/images/#{random_exception_image(500)}"
+end

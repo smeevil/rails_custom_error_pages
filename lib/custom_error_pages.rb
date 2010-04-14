@@ -19,14 +19,22 @@ module CustomErrorPages
       logger.debug "Not an exception, treating it as custom message."
       @message = exception
     end
-    render :template => "/application/500", :status => 500, :layout=>"custom_error_page"
+    respond_to do |format|
+      format.html {render :template => "/application/500", :status => 500, :layout=>"custom_error_page"}
+      format.xml {render :template => "/application/500", :status => 500}
+    end
+    
+    
   end
 
   def access_denied(exception=nil)
     logger.debug "Access denied"
     if current_user
       @message = exception unless exception.kind_of?(Exception)
-      render :template => 'application/403', :layout=>"custom_error_page" , :status=>403
+      respond_to do |format|
+        format.html {render :template => 'application/403', :layout=>"custom_error_page" , :status=>403}
+        format.xml {render :template => 'application/403', :status=>403}
+      end
     else
       flash[:notice] = "Access denied. Try to log in first."
       redirect_to login_path
@@ -43,7 +51,11 @@ module CustomErrorPages
     else
       @message = exception
     end
-    render :template => "/application/404", :status => 404, :layout=>"custom_error_page"
+    respond_to do |format|
+      format.html {render :template => "/application/404", :status => 404, :layout=>"custom_error_page"}
+      format.xml {render :template => "/application/404", :status => 404}
+    end
+    
   end
 
   protected
