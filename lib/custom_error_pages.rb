@@ -23,21 +23,25 @@ module CustomErrorPages
       format.html {render :template => "/application/500", :status => 500, :layout=>"custom_error_page"}
       format.xml {render :template => "/application/500", :status => 500}
     end
-    
-    
   end
 
   def access_denied(exception=nil)
     logger.debug "Access denied"
+    @message = exception unless exception.kind_of?(Exception)
     if current_user
-      @message = exception unless exception.kind_of?(Exception)
-      respond_to do |format|
-        format.html {render :template => 'application/403', :layout=>"custom_error_page" , :status=>403}
-        format.xml {render :template => 'application/403', :status=>403}
-      end
+      flash[:error] = "Access denied. You have insufficient privileges to go here."
     else
-      flash[:notice] = "Access denied. Try to log in first."
-      redirect_to login_path
+      flash[:error] = "Access denied. Try to log in first."
+    end
+    respond_to do |format|
+      format.html do
+        if current_user
+          render :template => 'application/403', :layout=>"custom_error_page" , :status=>403
+        else
+          redirect_to login_path
+        end
+      end
+      format.xml {render :template => 'application/403', :status=>403}
     end
   end
 
@@ -55,7 +59,7 @@ module CustomErrorPages
       format.html {render :template => "/application/404", :status => 404, :layout=>"custom_error_page"}
       format.xml {render :template => "/application/404", :status => 404}
     end
-    
+
   end
 
   protected

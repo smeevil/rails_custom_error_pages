@@ -27,3 +27,8 @@ The errors CustomErrorPages handles can be changed by overriding the following m
       super # Handle all default errors
     end
   end
+
+Controller methods that are required for CustomErrorPages to work:
+
+  login_path :: named route to login url
+  current_user :: currently logged in user object or nil if there is no logged in user
