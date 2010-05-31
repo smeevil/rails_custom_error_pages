@@ -129,7 +129,9 @@ end
 module ApplicationHelper
   def random_exception_image(err)
     files=Dir.glob("#{RAILS_ROOT}/public/images/#{err.to_s}/*")
-    files.rand.gsub("#{RAILS_ROOT}/public/images/","")
+    # Rails 2.3.6 deprecates the old Array#rand in favor of Array#random_element.
+    random_method = files.respond_to?(:random_element) ? :random_element : :rand
+    files.send(random_method).gsub("#{RAILS_ROOT}/public/images/","")
   end
 end
 
