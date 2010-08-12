@@ -31,7 +31,7 @@ module CustomErrorPages
     if current_user
       flash[:error] = "Access denied. You have insufficient privileges to go here."
     else
-      if self.respond_to?(:store_location)
+      session[:stored_location] = request.request_uri
       flash[:error] = "Access denied. Try to log in first."
     end
     respond_to do |format|
