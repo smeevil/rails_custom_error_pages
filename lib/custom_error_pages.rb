@@ -6,6 +6,10 @@ module CustomErrorPages
       klass.handle_exceptions
     end
 
+    def head_not_found
+      head :not_found
+    end
+
     def render_error(exception=nil)
       logger.debug "Real error"
       if exception.kind_of?(Exception)
@@ -62,7 +66,6 @@ module CustomErrorPages
         format.html {render :template => "/application/404", :status => 404, :layout=>"custom_error_page"}
         format.xml {render :template => "/application/404", :status => 404}
       end
-
     end
 
     protected
